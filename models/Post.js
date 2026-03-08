@@ -1,32 +1,41 @@
 const mongoose = require('mongoose');
+
 const PostSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true
+    },
 
-    {
-        title: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true
-        },
-        subtitle: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true
-        },
-        imageUrl: {
-            type: String,
-            required: true
-        },
-        author: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'user',
-            default: null
-        },
+    subtitle: {
+      type: String,
+      required: true
+    },
 
-        type: {
-            type: String,
-            enum: ["UPLOAD", "POPULATE"],
-            require: true
-        }
-    
+    imageUrl: {
+      type: String,
+      required: true
+    },
 
-    },{ timestamps : true}
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+
+    type: {
+      type: String,
+      enum: ["UPLOAD", "POPULATE"],
+      default: "UPLOAD"
+    },
+
+    content: {
+      type: String,
+      required: true
+    }
+
+  },
+  { timestamps: true }
 );
+
 module.exports = mongoose.model('Post', PostSchema);

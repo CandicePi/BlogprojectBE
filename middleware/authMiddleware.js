@@ -1,14 +1,14 @@
 const jwt = require('jsonwebtoken')
-const User = require('../modles/User')
+const User = require('../models/User')
 
 const protect = async (req, res, next)  => {
     let token;
 
-    if(re.headers.authorization && req.headers.authorization.startsWith("Bearer")){
+    if(req.headers.authorization && req.headers.authorization.startsWith("Bearer")){
         try{
             token = req.headers.authorization.split(" ")[1]
 
-            const decoded = jet.verify(token, process.env.JWT_SECRET)
+            const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
             req.user = await User.findById(decoded.id).select("-password")
 
@@ -21,7 +21,7 @@ const protect = async (req, res, next)  => {
     }
 
     if(!token) {
-        return res.status(401).json({error: "Not auth, no token!!"})
+        res.status(401).json({ message: "Not authorized" });
     }
 }
 

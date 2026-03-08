@@ -1,110 +1,121 @@
+// blogController.js
+const mongoose = require("mongoose");
 const User = require("../models/User");
-const Post = require("../models/Post")
+const Post = require("../models/Post");
 
-//Upload Blog (Create)
-const createBlog = async ( req, res ) => {
-    const { userId, post,title,content } = req.body;
+// ------------------------------
+// Upload Blog
+// ------------------------------
+const uploadBlog = async (req, res) => {
+  try {
+    const { title, subtitle, imageUrl, content } = req.body;
 
-    const user = await User.findById(req.user_Id);
-    user.content = user.post + content(posts)
-    await user.save()
+    // Get user from request (assuming auth middleware sets req.user)
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    await Post.create({
-        Author: req.user._Id,
-        blog,
-        type: "UPLOAD"
-    })
+    // Create a new Post
+    const blogPost = await Post.create({
+      author: user._id,
+      title,
+      subtitle,
+      imageUrl,
+      content,
+      type: "UPLOAD",
+    });
 
-    res.status(201).json ({
-        message: "Blog uploaded sucessfully",
-        blog: user.blog
-    })
+    res.status(201).json({
+      message: "Blog uploaded successfully",
+      blog: blogPost,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
 
-    //Populate Blog-display
-    const getBlog = async (req, res) => {
-        const {authorUserId, readerUserId, blog} = req.body
 
-        const author = await User.findById(UploadUserId)
-        const reader = await User.findById(PopulateUserId)
+const getAllBlogPosts = async (req, res) => {
+  try {
+    const posts = await Post.find().sort({ createdAt: -1 });
 
-        if(!populate){
-            return res.status(404).json({
-                error: 'Blog not found'
-            })
-        }
+    res.status(200).json({ posts });
 
-        if(upload.blog < populate){
-            return res.status(400).json({error: "Blog Unavailable"})
-        }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-    
-        await author.save()
-        await populate.save()
+// ------------------------------
+// Populate Blog (Display blogs)
+// ------------------------------
+const populateBlog = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-        await post.create({
-            Upload: UploadUserId,
-            populate: populateUserIs,
-            blog,
-            type: "UPLOAD"
-        })
+    // Fetch post, optionally populate author info
+    const post = await Post
+      .findById(id)
+      .populate("author", "username") // populate authir username
+      .lean();
 
-        res.status(200).json({message: "Blog upload sucessfull"})
-        
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
     }
 
-    //Post-read
-    const Post = async(req, res) => {
-      const post = await Post.find({
-            $or: [
-                {upload: req.user._Id},
-                {populate: req.user._Id},
-            ]
-        }).sort({createAt: -1})
+    res.status(200).json({ post });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
 
-        res.status(200).json({posts})
+// ------------------------------
+// Update Blog Post
+// ------------------------------
+const updatePost = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const post = await Post.findById(postId);
+
+    if (!post) return res.status(404).json({ error: "Post not found" });
+
+    // Check if the user is the author
+    if (post.author.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ error: "Not authorized" });
     }
 
-    const updatePost = async (req, res) =>{
-    try{
-        const postId = new mongoose.Types.ObjectId(req.params.id)
+    // Update fields
+    post.title = req.body.title || post.title;
+    post.content = req.body.content || post.content;
+    post.subtitle = req.body.subtitle || post.subtitle;
+    post.imageUrl = req.body.imageUrl || post.imageUrl;
 
-        const updatePost = await Posts.findByIdAndUpdate(userId, req.body,{new :true})
+    const updatedPost = await post.save();
+    res.status(200).json(updatedPost);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
 
-        if(!updatePost) return res.status(404).json({error: "Post not found"});
+// ------------------------------
+// Delete Blog Post
+// ------------------------------
+const deletePost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
 
-        res.status(200).json(updatesPost)
+    if (!post) return res.status(404).json({ error: "Post not found" });
 
-        if(post.author.toString() !==req.user) {
-            return res.status(401).json({error: 'Not authorized'});
-        }
-
-        post.title = req.body.title || post.title;
-        post.content = req.body.content || post.content;
-        post.tags = req.body.tags || post.tags;
-        post.status = req.bosy.status || post.status;
-
-        const updatedPost = await post.save();
-        res.status(200).json(updatedPost);
-
+    // Only author can delete
+    if (post.author.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ error: "Not authorized" });
     }
-    catch(error){
-         res.status(400).json({error: 'Failed to update post'})
-    }
-}
 
-exports.deletePost = async (req, res) => {
-    try{
-        const post = new mongoose.SchemaTypeOptions.ObjectId(req.params.id)
-        const deletedPost = await Users.findByIdAndDelete(req.params.id)
+    await post.deleteOne();
 
-        if(!deletedUser) return res.status(404).json({error: "Post not found"});
-        res.status(200).json({message: "User deleted successfully"})
-           }
-           catch(error){
-            res.status(400).json({error: error.message})
-           }
-        }
+    res.status(200).json({ message: "Post deleted successfully" });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
 
-}
-
-module.exports = { uploadBlog, populateBlog, updatePost,deletePost};
+module.exports = { uploadBlog, populateBlog, updatePost, deletePost, getAllBlogPosts };
