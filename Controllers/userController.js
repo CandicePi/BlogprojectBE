@@ -40,7 +40,7 @@ const login = async (req, res) => {
         return res.status(401).json({error: "Invalid credentials"})
     }
 res.json({
-    is: user._id,
+    id: user._id,
     Username: user.username,
     email: user.email,
     token: generateToken(user._id)

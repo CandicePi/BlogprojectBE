@@ -5,9 +5,9 @@ const {
   updatePost,
   deletePost,
   getAllBlogPosts
-} = require("../blogController");
+} = require("../Controllers/blogController");
 
-const protect = require("../../middleware/authMiddleware");
+const protect = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
